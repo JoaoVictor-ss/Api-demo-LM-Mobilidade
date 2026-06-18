@@ -1,3 +1,5 @@
-fastapi uvicorn tavily-python
+fastapi
+uvicorn
+tavily-python
 python-dotenv
-fastapi uvicorn psygopg2-binary
+requests
