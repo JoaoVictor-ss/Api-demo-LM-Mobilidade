@@ -31,6 +31,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -45,18 +46,62 @@ import requests
 # Configuração (tudo sobrescrevível por env)
 # ==========================================
 
-AGENT_BROWSER = os.getenv("AGENT_BROWSER_BIN", "agent-browser")
-
-# Caminho do Chrome real. Default macOS; em Linux aponte para google-chrome.
-_DEFAULT_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-CHROME_PATH = os.getenv("WEBMOTORS_CHROME_PATH", _DEFAULT_CHROME)
-
-# UA coerente com o Chrome usado no mint. Tem que bater com o binário real.
-DEFAULT_UA = os.getenv(
-    "WEBMOTORS_UA",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+# Binário do agent-browser. No Windows o npm instala um shim `.cmd`, e o
+# subprocess (shell=False) só resolve `.exe` no PATH — então achamos o caminho
+# completo (com extensão, via PATHEXT) com shutil.which. Em macOS/Linux devolve
+# o launcher normal. Com o caminho completo de um `.cmd`/`.bat`, o subprocess o
+# lança pelo shell do sistema automaticamente.
+AGENT_BROWSER = (
+    os.getenv("AGENT_BROWSER_BIN") or shutil.which("agent-browser") or "agent-browser"
 )
+
+
+def _default_chrome_path() -> str:
+    """Caminho do Chrome real por SO — o 1º que existir, senão o default do SO.
+
+    O mint precisa do Chrome de verdade (o fingerprint tem que ser o do binário
+    real). Sobrescrevível por WEBMOTORS_CHROME_PATH.
+    """
+    if sys.platform == "win32":
+        candidates = [
+            os.path.expandvars(r"%PROGRAMFILES%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%PROGRAMFILES(X86)%\Google\Chrome\Application\chrome.exe"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+        ]
+    elif sys.platform == "darwin":
+        candidates = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]
+    else:  # linux e afins
+        candidates = [
+            "/usr/bin/google-chrome",
+            "/usr/bin/google-chrome-stable",
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser",
+        ]
+    return next((p for p in candidates if os.path.exists(p)), candidates[0])
+
+
+CHROME_PATH = os.getenv("WEBMOTORS_CHROME_PATH") or _default_chrome_path()
+
+
+def _default_user_agent() -> str:
+    """UA coerente com o SO real — o PerimeterX cruza o UA com o fingerprint,
+    então um UA de Mac rodando no Windows é um tell. Sobrescrevível por
+    WEBMOTORS_UA. No bypass por cookie, use o UA do navegador onde colheu os
+    cookies.
+    """
+    if sys.platform == "win32":
+        platform_token = "Windows NT 10.0; Win64; x64"
+    elif sys.platform == "darwin":
+        platform_token = "Macintosh; Intel Mac OS X 10_15_7"
+    else:
+        platform_token = "X11; Linux x86_64"
+    return (
+        f"Mozilla/5.0 ({platform_token}) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+    )
+
+
+DEFAULT_UA = os.getenv("WEBMOTORS_UA") or _default_user_agent()
 
 BASE_URL = "https://www.webmotors.com.br"
 SESSION_NAME = os.getenv("WEBMOTORS_SESSION", "wm-scraper")

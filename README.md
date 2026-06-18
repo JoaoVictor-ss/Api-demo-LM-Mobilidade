@@ -31,7 +31,7 @@ real e amarrado ao fingerprint + IP. O fluxo (em `webmotors_scraper.py`):
 Validado: 40/40 hits no detail + 12/12 carros distintos a partir da busca, e
 cold-start completo (mint → busca → detalhe) reproduzível do zero.
 
-## Setup
+## Setup (macOS / Linux)
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
@@ -49,6 +49,87 @@ uvicorn vehicle_search:app --reload
 > requests seguintes reusam a sessão em cache (~8 min) e são HTTP puro, rápidos.
 > Sem ambiente gráfico? Exporte `WEBMOTORS_COOKIE` com cookies válidos (ver
 > `.env.example`) e o browser nem é chamado.
+
+## Rodar no Windows
+
+Roda no Windows (x64). O caminho do Chrome e o User-Agent já são detectados por
+SO automaticamente — você não precisa configurar nada disso na mão.
+
+Pré-requisito comum: **Python 3.10+** (baixe em
+[python.org](https://www.python.org/downloads/) e marque **"Add python.exe to
+PATH"** no instalador). Comandos abaixo em **PowerShell**, na raiz do projeto:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+> Se o `Activate.ps1` for bloqueado pela política de execução, rode antes:
+> `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned`
+> (ou, no `cmd`, use `.venv\Scripts\activate.bat`).
+
+Agora escolha **um** dos dois caminhos pra passar pelo PerimeterX. Pra só ver
+funcionando rápido, use o **A**; pra deixar rodando sem copiar cookie na mão,
+use o **B**.
+
+### Caminho A — Bypass por cookie (mais simples, sem Node)
+
+Python puro, sem browser automatizado. Bom pra testar em 2 minutos.
+
+1. Abra `https://www.webmotors.com.br` no seu Chrome (resolva o "Pressione e
+   segure" se aparecer).
+2. `F12` → aba **Application** → **Cookies** → `https://www.webmotors.com.br`.
+   Copie os valores de `_px3`, `_pxvid`, `pxcts` e `_pxde`.
+3. No `.env`, preencha numa linha só:
+   ```env
+   WEBMOTORS_COOKIE=_px3=<valor>; _pxvid=<valor>; pxcts=<valor>; _pxde=<valor>
+   ```
+4. Suba a API:
+   ```powershell
+   uvicorn vehicle_search:app --reload
+   ```
+
+> O `_px3` expira em ~10 min. Quando os endpoints começarem a dar **502**,
+> repita os passos 1–3 com cookies novos — ou use o Caminho B, que renova
+> sozinho.
+
+### Caminho B — Automático (sem copiar cookie)
+
+Abre o Chrome real uma vez, resolve o PerimeterX sozinho e re-minta quando o
+token expira. Precisa de mais duas coisas instaladas:
+
+- **Google Chrome** (o caminho padrão é detectado automaticamente).
+- **Node.js 24+** ([nodejs.org](https://nodejs.org)) + o `agent-browser`:
+  ```powershell
+  npm i -g agent-browser
+  agent-browser install
+  ```
+
+Deixe o `.env` **sem** `WEBMOTORS_COOKIE` e suba a API:
+
+```powershell
+uvicorn vehicle_search:app --reload
+```
+
+No primeiro request a `/webmotors/*` o Chrome abre por ~30–60s (mint); os
+seguintes reusam a sessão em cache.
+
+> Chrome instalado em local não-padrão? Defina `WEBMOTORS_CHROME_PATH` no `.env`
+> apontando pro `chrome.exe`.
+
+### Testar
+
+Com a API no ar (qualquer caminho), abra `http://localhost:8000/docs` no
+navegador (Swagger UI) ou, em outro terminal:
+
+```powershell
+curl.exe "http://localhost:8000/webmotors/search?marca=honda&modelo=city&per_page=12"
+```
+
+> No Windows use **`curl.exe`** — o `curl` "pelado" no PowerShell é um alias de
+> `Invoke-WebRequest` e não aceita os mesmos argumentos.
 
 ## Endpoints
 
