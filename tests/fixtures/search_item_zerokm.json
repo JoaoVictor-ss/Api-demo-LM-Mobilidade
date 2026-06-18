@@ -1,0 +1,35 @@
+{
+  "UniqueId": 0,
+  "Media": {
+    "Photos": [
+      {
+        "PhotoPath": "https://www.webmotors.com.br/imagens/prod/379587/HONDA_CITY_1.5_IVTEC_FLEX_HATCH_EX_CVT_37958717013955140.webp",
+        "Order": 1
+      }
+    ]
+  },
+  "Specification": {
+    "Make": {
+      "id": 16,
+      "Value": "HONDA"
+    },
+    "Model": {
+      "id": 3053,
+      "Value": "CITY"
+    },
+    "Version": {
+      "id": 379587,
+      "Value": "1.5 I-VTEC FLEX HATCH EX CVT"
+    },
+    "YearFabrication": "2026",
+    "YearModel": 2026.0,
+    "Auction": false
+  },
+  "Prices": {
+    "Price": 136300.0
+  },
+  "IsElegibleVehicleInspection": false,
+  "IsElegible360View": false,
+  "MediaZeroKm": true,
+  "AdvertisementLink": "https://www.webmotors.com.br/honda/city/2026/1-5-i-vtec-flex-hatch-ex-cvt/387558/quero-negociar"
+}

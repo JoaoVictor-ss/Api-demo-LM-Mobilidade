@@ -1,0 +1,146 @@
+{
+  "UniqueId": 71923214,
+  "Media": {
+    "Photos": [
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17380473940.jpg",
+        "Order": 1
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17380688848.jpg",
+        "Order": 2
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17380897680.jpg",
+        "Order": 3
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17381153753.jpg",
+        "Order": 4
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17381337981.jpg",
+        "Order": 5
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17381668130.jpg",
+        "Order": 6
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17381968588.jpg",
+        "Order": 7
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17382179778.jpg",
+        "Order": 8
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17382535128.jpg",
+        "Order": 9
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem1738279516.jpg",
+        "Order": 10
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17383036388.jpg",
+        "Order": 11
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17383547662.jpg",
+        "Order": 12
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17383969372.jpg",
+        "Order": 13
+      },
+      {
+        "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17384310785.jpg",
+        "Order": 14
+      }
+    ]
+  },
+  "PhotoPath": "2026\\202606\\20260616\\honda-city-1.5-ivtec-flex-exl-cvt-wmimagem17380473940.jpg",
+  "Specification": {
+    "Title": "HONDA CITY 1.5 i-VTEC FLEX EXL CVT",
+    "Make": {
+      "id": 16,
+      "Value": "HONDA"
+    },
+    "Model": {
+      "id": 3053,
+      "Value": "CITY"
+    },
+    "Version": {
+      "id": 348898,
+      "Value": "1.5 i-VTEC FLEX EXL CVT"
+    },
+    "YearFabrication": "2024",
+    "YearModel": 2024.0,
+    "Odometer": 33384.0,
+    "Transmission": "Automática",
+    "NumberPorts": "4",
+    "BodyType": "Sedã",
+    "Auction": false,
+    "VehicleAttributes": [
+      {
+        "Name": "Aceita troca"
+      }
+    ],
+    "Armored": "N",
+    "Color": {
+      "IdPrimary": "30405",
+      "Primary": "Cinza"
+    }
+  },
+  "Seller": {
+    "Id": 3911179,
+    "SellerType": "PJ",
+    "City": "Brasília",
+    "State": "Distrito Federal (DF)",
+    "AdType": {
+      "id": 2,
+      "Value": "Concessionária"
+    },
+    "BudgetInvestimento": 0,
+    "DealerScore": 0,
+    "CarDelivery": false,
+    "TrocaComTroco": false,
+    "ExceededPlan": false,
+    "FantasyName": "PRIMEIRAMÃO CIDADE DO AUTOMÓVEL",
+    "IsCtaWhatsApp": false,
+    "Localization": [
+      {
+        "State": "Distrito Federal (DF)",
+        "City": "Brasília",
+        "Country": "Brasil",
+        "Neighborhood": "Zona Industrial",
+        "ZipCode": "71250020",
+        "AbbrState": "ST SCIA QUADRA 15 CONJUNTO 4, SN"
+      }
+    ]
+  },
+  "Prices": {
+    "Price": 115900.0,
+    "SearchPrice": 115900.0
+  },
+  "HotDeal": [
+    {
+      "Id": "3653",
+      "Value": "Grupo Primeira Mão BSB"
+    }
+  ],
+  "ListingType": "U",
+  "ProductCode": "38489",
+  "Channels": [
+    {
+      "id": 0,
+      "Value": "Webmotors"
+    }
+  ],
+  "LongComment": "Elegância, conforto e tecnologia em um sedã que se destaca pela qualidade, eficiência e excelente valorização no mercado.\n\nO Honda City EXL oferece acabamento refinado, amplo espaço interno e a reconhecida confiabilidade da marca, proporcionando uma experiência de condução confortável e segura para todas as ocasiões.\n\nCom excelente espaço interno, porta-malas generoso e baixo custo de manutenção, o City EXL é ideal para quem busca conforto, tecnologia e tranquilidade ao dirigir.\n\nVeículo impecáv",
+  "FipePercent": 100,
+  "IsElegibleVehicleInspection": false,
+  "IsElegible360View": true,
+  "MediaZeroKm": false
+}

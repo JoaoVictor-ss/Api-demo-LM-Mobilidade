@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+# Root-level source files (webmotors_scraper.py, vehicle_search.py) live at
+# the repo root — add it to sys.path so `import webmotors_scraper` resolves.
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-v"
