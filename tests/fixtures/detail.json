@@ -1,0 +1,231 @@
+{
+  "CreatedDate": "2026-05-21T16:16:55.57",
+  "FipePercent": 92,
+  "GoodDeal": true,
+  "IsElegible360View": false,
+  "IsElegibleVehicleInspection": false,
+  "ListingType": "U",
+  "LongComment": "",
+  "Media": {
+    "Photos": [
+      {
+        "Order": 1,
+        "PhotoPath": "2026\\202605\\20260521\\hondacity15ivtecflexhatchexlcvt-WMIMAGEM16274358438.jpg"
+      },
+      {
+        "Order": 2,
+        "PhotoPath": "2026\\202605\\20260521\\hondacity15ivtecflexhatchexlcvt-WMIMAGEM16280059497.jpg"
+      },
+      {
+        "Order": 3,
+        "PhotoPath": "2026\\202605\\20260521\\hondacity15ivtecflexhatchexlcvt-WMIMAGEM16283734886.jpg"
+      },
+      {
+        "Order": 4,
+        "PhotoPath": "2026\\202605\\20260521\\hondacity15ivtecflexhatchexlcvt-WMIMAGEM16291234053.jpg"
+      },
+      {
+        "Order": 5,
+        "PhotoPath": "2026\\202605\\20260521\\hondacity15ivtecflexhatchexlcvt-WMIMAGEM16301463472.jpg"
+      },
+      {
+        "Order": 6,
+        "PhotoPath": "2026\\202605\\20260521\\hondacity15ivtecflexhatchexlcvt-WMIMAGEM16302645317.jpg"
+      },
+      {
+        "Order": 7,
+        "PhotoPath": "2026\\202605\\20260521\\hondacity15ivtecflexhatchexlcvt-WMIMAGEM16302739269.jpg"
+      },
+      {
+        "Order": 8,
+        "PhotoPath": "2026\\202605\\20260521\\hondacity15ivtecflexhatchexlcvt-WMIMAGEM16303031335.jpg"
+      }
+    ]
+  },
+  "Prices": {
+    "Price": "90000",
+    "SearchPrice": "90000"
+  },
+  "ProductCode": "674",
+  "ProductCodeVersion": "41056",
+  "SEO": {
+    "BreadCrumb": {
+      "1": {
+        "Description": "https://www.webmotors.com.br/",
+        "Key": "Home"
+      },
+      "2": {
+        "Description": "https://www.webmotors.com.br/carros-usados/estoque",
+        "Key": "Carros usados"
+      },
+      "3": {
+        "Description": "https://www.webmotors.com.br/carros-usados/rj",
+        "Key": "Rj"
+      },
+      "4": {
+        "Description": "https://www.webmotors.com.br/carros-usados/rj-volta-redonda",
+        "Key": "Volta Redonda"
+      },
+      "5": {
+        "Description": "https://www.webmotors.com.br/carros-usados/rj-volta-redonda/honda",
+        "Key": "Honda"
+      },
+      "6": {
+        "Description": "https://www.webmotors.com.br/carros-usados/rj-volta-redonda/honda/city",
+        "Key": "city"
+      },
+      "7": {
+        "Description": "https://www.webmotors.com.br/carros-usados/rj-volta-redonda/honda/city/15-i-vtec-flex-hatch-exl-cvt",
+        "Key": "1.5 I-Vtec Flex Hatch Exl Cvt"
+      }
+    }
+  },
+  "Seller": {
+    "AdType": {
+      "Value": "Pessoa Física",
+      "id": 4
+    },
+    "BudgetInvestimento": 0,
+    "CarDelivery": false,
+    "City": "Volta Redonda",
+    "CreatedDate": "0001-01-01T00:00:00",
+    "DealerScore": 0,
+    "ExceededPlan": false,
+    "FirstName": "Marcio",
+    "HyundaiGroup": false,
+    "Id": 8164410,
+    "IsCtaWhatsApp": false,
+    "Localization": [
+      {
+        "AbbrState": "RJ",
+        "City": "Volta Redonda",
+        "Country": "Brasil",
+        "State": "Rio de Janeiro (RJ)",
+        "ZipCode": "27240560"
+      }
+    ],
+    "Phones": [
+      {
+        "Value": "(24) 9990",
+        "order": 1,
+        "type": "Home"
+      }
+    ],
+    "SellerType": "PF",
+    "ShowPhone": true,
+    "State": "Rio de Janeiro (RJ)",
+    "TrocaComTroco": false
+  },
+  "SellerBadges": false,
+  "Specification": {
+    "Armored": "N",
+    "BodyType": "Hatchback",
+    "Color": {
+      "IdPrimary": "30409",
+      "Primary": "Prata"
+    },
+    "Colors": [
+      {
+        "IdPrimary": "30409",
+        "Primary": "Prata"
+      }
+    ],
+    "DatePublished": "2026-06-18T08:28:39.0596986+00:00",
+    "Evaluation": {
+      "FIPE": 98173,
+      "FIPEId": "014108-9"
+    },
+    "FinalPlate": "5",
+    "Fuel": "Gasolina e álcool",
+    "LifeStyle": [
+      {
+        "Value": "Carros para aplicativos"
+      }
+    ],
+    "Make": {
+      "Value": "HONDA",
+      "id": 16
+    },
+    "Model": {
+      "Value": "CITY",
+      "id": 3053
+    },
+    "NumberPorts": "4",
+    "Odometer": "70000",
+    "Optionals": [
+      {
+        "Name": "Airbag",
+        "_id": 0
+      },
+      {
+        "Name": "Alarme",
+        "_id": 0
+      },
+      {
+        "Name": "Ar quente",
+        "_id": 0
+      },
+      {
+        "Name": "Banco com regulagem de altura",
+        "_id": 0
+      },
+      {
+        "Name": "Computador de bordo",
+        "_id": 0
+      },
+      {
+        "Name": "Desembaçador traseiro",
+        "_id": 0
+      },
+      {
+        "Name": "Ar condicionado",
+        "_id": 0
+      },
+      {
+        "Name": "Freio ABS",
+        "_id": 0
+      },
+      {
+        "Name": "Rodas de liga leve",
+        "_id": 0
+      },
+      {
+        "Name": "Travas elétricas",
+        "_id": 0
+      },
+      {
+        "Name": "Vidros elétricos",
+        "_id": 0
+      },
+      {
+        "Name": "Bancos em couro",
+        "_id": 0
+      },
+      {
+        "Name": "Direção hidráulica",
+        "_id": 0
+      }
+    ],
+    "Title": "HONDA CITY 1.5 i-VTEC FLEX HATCH EXL CVT",
+    "Transmission": "CVT",
+    "VehicleAttributes": [
+      {
+        "Name": "Aceita troca"
+      },
+      {
+        "Name": "IPVA pago"
+      },
+      {
+        "Name": "Licenciado"
+      }
+    ],
+    "Version": {
+      "Value": "1.5 i-VTEC FLEX HATCH EXL CVT",
+      "id": 348912
+    },
+    "YearFabrication": "2022",
+    "YearModel": "2022"
+  },
+  "Type": "car",
+  "UniqueId": 69863170
+}
