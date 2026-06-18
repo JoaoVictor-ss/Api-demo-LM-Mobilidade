@@ -1,1 +1,10 @@
 .env
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Artefatos do scraper Webmotors (sessão PerimeterX / perfil do Chrome)
+wm-session.json
+wm-scraper-profile/
+wm-stealth.js
