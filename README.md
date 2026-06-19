@@ -74,6 +74,7 @@ Com a API no ar, abra `http://localhost:8000/docs` ou rode:
 
 ```bash
 curl "http://localhost:8000/webmotors/search?marca=honda&modelo=city&per_page=12"
+curl "http://localhost:8000/webmotors/search?marca=honda&modelo=city&localidade=S%C3%A3o%20Paulo&cor=Branco&ano_de=2019&ano_ate=2022"
 ```
 
 No PowerShell, use `curl.exe` em vez de `curl`.
@@ -82,6 +83,7 @@ Também dá para testar sem subir a API:
 
 ```bash
 python webmotors_scraper.py search --marca honda --modelo city --per-page 1
+python webmotors_scraper.py search --marca honda --modelo city --localidade "São Paulo" --cor Branco --ano-de 2019 --ano-ate 2022
 python webmotors_scraper.py detail --marca honda --modelo city --pages 1 --per-page 1
 ```
 
@@ -90,9 +92,11 @@ python webmotors_scraper.py detail --marca honda --modelo city --pages 1 --per-p
 ```bash
 # Busca real (lista + médias)
 curl 'http://localhost:8000/webmotors/search?marca=honda&modelo=city&per_page=12'
+curl 'http://localhost:8000/webmotors/search?marca=honda&modelo=city&localidade=S%C3%A3o%20Paulo&cor=Branco&ano_de=2019&ano_ate=2022'
 
 # Busca + detalhe completo de cada usado
 curl 'http://localhost:8000/webmotors/detail?marca=honda&modelo=city&pages=1&per_page=12'
+curl 'http://localhost:8000/webmotors/detail?marca=honda&modelo=city&localidade=S%C3%A3o%20Paulo&cor=Branco&ano_de=2019&ano_ate=2022&pages=1&per_page=12'
 
 # Detalhe por URL de detail
 curl 'http://localhost:8000/webmotors/detail_by_url?url=https://www.webmotors.com.br/api/detail/car/honda/city/15-i-vtec-flex-hatch-exl-cvt/4-portas/2022/69863170'
@@ -106,6 +110,7 @@ curl -X POST 'http://localhost:8000/webmotors/refresh_session'
 ```bash
 python webmotors_scraper.py mint                              # abre o browser e salva a sessão
 python webmotors_scraper.py search --marca honda --modelo city --per-page 12
+python webmotors_scraper.py search --marca honda --modelo city --localidade "São Paulo" --cor Branco --ano-de 2019 --ano-ate 2022
 python webmotors_scraper.py detail --marca honda --modelo city --per-page 6
 python webmotors_scraper.py url "https://www.webmotors.com.br/api/detail/car/..."
 ```

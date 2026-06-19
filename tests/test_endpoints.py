@@ -41,14 +41,23 @@ client = TestClient(app)
 # (mirrors the logic in webmotors_scraper.WebmotorsClient.search)
 # ---------------------------------------------------------------------------
 
-def _search_api_url(*, make: str, model: str = "", page: int = 1, per_page: int = 24) -> str:
+def _search_api_url(
+    *,
+    make: str,
+    model: str = "",
+    page: int = 1,
+    per_page: int = 24,
+    extra: dict[str, str] | None = None,
+) -> str:
     """Produce the full search URL that WebmotorsClient.search constructs."""
     import requests as _r
 
     inner: dict[str, str] = {"tipoveiculo": "carros", "marca1": make.lower(), "page": str(page)}
     if model:
         inner["modelo1"] = model.lower()
-    inner_qs = "&".join(f"{k}={v}" for k, v in inner.items())
+    if extra:
+        inner.update(extra)
+    inner_qs = _r.compat.urlencode(inner)
     inner_url = _r.utils.quote(f"{BASE_URL}/carros/estoque?{inner_qs}", safe="")
     return (
         f"{BASE_URL}/api/search/car?url={inner_url}"
@@ -116,7 +125,7 @@ def test_webmotors_search_200_shape(
 
     # Top-level keys produced by the endpoint
     expected_keys = {
-        "marca", "modelo", "page", "total_disponivel",
+        "marca", "modelo", "localidade", "cor", "ano_de", "ano_ate", "page", "total_disponivel",
         "total_anuncios", "media_preco", "media_km", "anuncios",
         "payload_completo",
     }
@@ -125,6 +134,10 @@ def test_webmotors_search_200_shape(
     # Scalar fields
     assert data["marca"] == "honda"
     assert data["modelo"] == "city"
+    assert data["localidade"] == ""
+    assert data["cor"] == ""
+    assert data["ano_de"] is None
+    assert data["ano_ate"] is None
     assert data["page"] == 1
     assert data["total_disponivel"] == search_payload["Count"]
 
@@ -143,6 +156,43 @@ def test_webmotors_search_200_shape(
     assert "Specification" in anuncio
     assert "Prices" in anuncio
     assert "Media" in anuncio
+
+
+def test_webmotors_search_accepts_location_color_and_year_range(
+    webmotors_cookie_env: None,
+    requests_mock: Any,
+    search_payload: dict[str, Any],
+) -> None:
+    """GET /webmotors/search forwards localidade/cor/ano_de/ano_ate to Webmotors."""
+    requests_mock.get(re.compile(r".*/api/search/car.*"), json=search_payload, status_code=200)
+
+    resp = client.get(
+        "/webmotors/search"
+        "?marca=honda&modelo=city&localidade=S%C3%A3o%20Paulo"
+        "&cor=Branco&ano_de=2019&ano_ate=2022"
+    )
+    assert resp.status_code == 200
+
+    data = resp.json()
+    assert data["localidade"] == "São Paulo"
+    assert data["cor"] == "Branco"
+    assert data["ano_de"] == 2019
+    assert data["ano_ate"] == 2022
+
+    from urllib.parse import parse_qs, unquote, urlparse
+
+    parsed = urlparse(requests_mock.last_request.url)
+    qs = parse_qs(parsed.query, keep_blank_values=True)
+    decoded_inner = unquote(qs["url"][0])
+    assert "localizacao=São+Paulo" in decoded_inner
+    assert "cor1=Branco" in decoded_inner
+    assert "anode=2019" in decoded_inner
+    assert "anoate=2022" in decoded_inner
+
+
+def test_webmotors_search_rejects_inverted_year_range() -> None:
+    resp = client.get("/webmotors/search?marca=honda&modelo=city&ano_de=2022&ano_ate=2019")
+    assert resp.status_code == 400
 
 
 # ============================================================================
@@ -173,11 +223,18 @@ def test_webmotors_detail_200_shape_and_medias(
     data = resp.json()
 
     # Top-level keys
-    expected_keys = {"marca", "modelo", "total_anuncios", "media_preco", "media_km", "anuncios"}
+    expected_keys = {
+        "marca", "modelo", "localidade", "cor", "ano_de", "ano_ate",
+        "total_anuncios", "media_preco", "media_km", "anuncios",
+    }
     assert expected_keys == set(data.keys())
 
     assert data["marca"] == "honda"
     assert data["modelo"] == "city"
+    assert data["localidade"] == ""
+    assert data["cor"] == ""
+    assert data["ano_de"] is None
+    assert data["ano_ate"] is None
 
     # 0km items (UniqueId==0) must have been skipped; 12 used items remain.
     assert data["total_anuncios"] == 12

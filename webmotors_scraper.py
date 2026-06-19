@@ -37,6 +37,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 import requests
 from playwright.sync_api import Error as PlaywrightError
@@ -134,6 +135,26 @@ _STEALTH_JS = """
 
 class WebmotorsBlocked(RuntimeError):
     """Falha em obter uma sessão válida (PerimeterX bloqueou de novo)."""
+
+
+def _build_search_extra(
+    *,
+    localidade: str = "",
+    cor: str = "",
+    ano_de: int | None = None,
+    ano_ate: int | None = None,
+) -> dict[str, str]:
+    """Monta filtros adicionais para a URL interna de estoque da Webmotors."""
+    extra: dict[str, str] = {}
+    if localidade:
+        extra["localizacao"] = localidade.strip()
+    if cor:
+        extra["cor1"] = cor.strip()
+    if ano_de is not None:
+        extra["anode"] = str(ano_de)
+    if ano_ate is not None:
+        extra["anoate"] = str(ano_ate)
+    return {k: v for k, v in extra.items() if v}
 
 
 @dataclass
@@ -384,7 +405,7 @@ class WebmotorsClient:
             inner["modelo1"] = model.lower()
         if extra:
             inner.update(extra)
-        inner_qs = "&".join(f"{k}={v}" for k, v in inner.items())
+        inner_qs = urlencode(inner)
         inner_url = requests.utils.quote(f"{BASE_URL}/carros/estoque?{inner_qs}", safe="")
         url = (
             f"{BASE_URL}/api/search/car?url={inner_url}"
@@ -407,12 +428,18 @@ class WebmotorsClient:
         return resp.json()
 
     def iter_details(
-        self, *, make: str, model: str = "", pages: int = 1, per_page: int = 24
+        self,
+        *,
+        make: str,
+        model: str = "",
+        pages: int = 1,
+        per_page: int = 24,
+        extra: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
         """Busca + detalha todos os usados (UniqueId > 0) das páginas pedidas."""
         out: list[dict[str, Any]] = []
         for p in range(1, pages + 1):
-            results = self.search(make=make, model=model, page=p, per_page=per_page)
+            results = self.search(make=make, model=model, page=p, per_page=per_page, extra=extra)
             for item in results.get("SearchResults", []):
                 if item.get("UniqueId", 0) > 0:
                     out.append(self.get_detail(listing=item))
@@ -457,12 +484,20 @@ def _main(argv: list[str]) -> int:
     p_search = sub.add_parser("search", help="lista anúncios")
     p_search.add_argument("--marca", required=True)
     p_search.add_argument("--modelo", default="")
+    p_search.add_argument("--localidade", default="")
+    p_search.add_argument("--cor", default="")
+    p_search.add_argument("--ano-de", type=int)
+    p_search.add_argument("--ano-ate", type=int)
     p_search.add_argument("--page", type=int, default=1)
     p_search.add_argument("--per-page", type=int, default=24)
 
     p_detail = sub.add_parser("detail", help="detalha N usados de uma busca")
     p_detail.add_argument("--marca", required=True)
     p_detail.add_argument("--modelo", default="")
+    p_detail.add_argument("--localidade", default="")
+    p_detail.add_argument("--cor", default="")
+    p_detail.add_argument("--ano-de", type=int)
+    p_detail.add_argument("--ano-ate", type=int)
     p_detail.add_argument("--pages", type=int, default=1)
     p_detail.add_argument("--per-page", type=int, default=12)
 
@@ -476,10 +511,34 @@ def _main(argv: list[str]) -> int:
         sess = client.ensure_session(force=True)
         print(json.dumps({"cookies": list(sess.cookies), "user_agent": sess.user_agent}, indent=2))
     elif args.cmd == "search":
-        data = client.search(make=args.marca, model=args.modelo, page=args.page, per_page=args.per_page)
+        extra = _build_search_extra(
+            localidade=args.localidade,
+            cor=args.cor,
+            ano_de=args.ano_de,
+            ano_ate=args.ano_ate,
+        )
+        data = client.search(
+            make=args.marca,
+            model=args.modelo,
+            page=args.page,
+            per_page=args.per_page,
+            extra=extra,
+        )
         print(json.dumps(data, ensure_ascii=False, indent=2))
     elif args.cmd == "detail":
-        details = client.iter_details(make=args.marca, model=args.modelo, pages=args.pages, per_page=args.per_page)
+        extra = _build_search_extra(
+            localidade=args.localidade,
+            cor=args.cor,
+            ano_de=args.ano_de,
+            ano_ate=args.ano_ate,
+        )
+        details = client.iter_details(
+            make=args.marca,
+            model=args.modelo,
+            pages=args.pages,
+            per_page=args.per_page,
+            extra=extra,
+        )
         print(json.dumps(details, ensure_ascii=False, indent=2))
     elif args.cmd == "url":
         print(json.dumps(client.get_detail(url=args.url), ensure_ascii=False, indent=2))

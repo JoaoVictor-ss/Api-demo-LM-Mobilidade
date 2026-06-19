@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from tavily import TavilyClient
 from dotenv import load_dotenv
 from pathlib import Path
@@ -235,13 +235,27 @@ def search_vehicle(
 def webmotors_search(
     marca: str,
     modelo: str = "",
+    localidade: str = Query("", description="Localidade da busca, ex.: SP, São Paulo ou São Paulo/SP"),
+    cor: str = Query("", description="Cor do veículo, ex.: Branco, Preto, Prata"),
+    ano_de: int | None = Query(None, description="Ano inicial do modelo, ex.: 2019"),
+    ano_ate: int | None = Query(None, description="Ano final do modelo, ex.: 2022"),
     page: int = 1,
     per_page: int = 24,
 ):
     """Busca anúncios reais na Webmotors (preço/km/cor/cidade corretos)."""
+    if ano_de is not None and ano_ate is not None and ano_de > ano_ate:
+        raise HTTPException(status_code=400, detail="ano_de não pode ser maior que ano_ate")
+
+    extra = wm._build_search_extra(
+        localidade=localidade,
+        cor=cor,
+        ano_de=ano_de,
+        ano_ate=ano_ate,
+    )
+
     try:
         data = get_webmotors_client().search(
-            make=marca, model=modelo, page=page, per_page=per_page
+            make=marca, model=modelo, page=page, per_page=per_page, extra=extra
         )
     except wm.WebmotorsBlocked as exc:
         raise HTTPException(status_code=502, detail=str(exc))
@@ -253,6 +267,10 @@ def webmotors_search(
     return {
         "marca": marca,
         "modelo": modelo,
+        "localidade": localidade,
+        "cor": cor,
+        "ano_de": ano_de,
+        "ano_ate": ano_ate,
         "page": page,
         "total_disponivel": data.get("Count"),
         "total_anuncios": len(anuncios),
@@ -267,13 +285,27 @@ def webmotors_search(
 def webmotors_detail(
     marca: str,
     modelo: str = "",
+    localidade: str = Query("", description="Localidade da busca, ex.: SP, São Paulo ou São Paulo/SP"),
+    cor: str = Query("", description="Cor do veículo, ex.: Branco, Preto, Prata"),
+    ano_de: int | None = Query(None, description="Ano inicial do modelo, ex.: 2019"),
+    ano_ate: int | None = Query(None, description="Ano final do modelo, ex.: 2022"),
     pages: int = 1,
     per_page: int = 12,
 ):
     """Busca + detalha cada usado (payload completo do /api/detail)."""
+    if ano_de is not None and ano_ate is not None and ano_de > ano_ate:
+        raise HTTPException(status_code=400, detail="ano_de não pode ser maior que ano_ate")
+
+    extra = wm._build_search_extra(
+        localidade=localidade,
+        cor=cor,
+        ano_de=ano_de,
+        ano_ate=ano_ate,
+    )
+
     try:
         details = get_webmotors_client().iter_details(
-            make=marca, model=modelo, pages=pages, per_page=per_page
+            make=marca, model=modelo, pages=pages, per_page=per_page, extra=extra
         )
     except wm.WebmotorsBlocked as exc:
         raise HTTPException(status_code=502, detail=str(exc))
@@ -284,6 +316,10 @@ def webmotors_detail(
     return {
         "marca": marca,
         "modelo": modelo,
+        "localidade": localidade,
+        "cor": cor,
+        "ano_de": ano_de,
+        "ano_ate": ano_ate,
         "total_anuncios": len(details),
         "media_preco": medias["media_preco"],
         "media_km": medias["media_km"],
