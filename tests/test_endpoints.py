@@ -253,7 +253,7 @@ def test_webmotors_refresh_session_200(
 ) -> None:
     """POST /webmotors/refresh_session returns 200 + {ok, cookies, user_agent}."""
     # With WEBMOTORS_COOKIE set, ensure_session(force=True) takes the
-    # no-browser bypass and returns a WebmotorsSession without subprocess.
+    # no-browser bypass and returns a WebmotorsSession without Playwright.
     resp = client.post("/webmotors/refresh_session")
     assert resp.status_code == 200
 
