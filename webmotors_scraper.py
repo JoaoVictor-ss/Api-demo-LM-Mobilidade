@@ -477,16 +477,12 @@ def _main(argv: list[str]) -> int:
         print(json.dumps({"cookies": list(sess.cookies), "user_agent": sess.user_agent}, indent=2))
     elif args.cmd == "search":
         data = client.search(make=args.marca, model=args.modelo, page=args.page, per_page=args.per_page)
-        rows = [
-            normalize_detail({"Specification": it["Specification"], "Prices": it["Prices"], "UniqueId": it["UniqueId"]})
-            for it in data.get("SearchResults", [])
-        ]
-        print(json.dumps({"count": data.get("Count"), "results": rows}, ensure_ascii=False, indent=2))
+        print(json.dumps(data, ensure_ascii=False, indent=2))
     elif args.cmd == "detail":
         details = client.iter_details(make=args.marca, model=args.modelo, pages=args.pages, per_page=args.per_page)
-        print(json.dumps([normalize_detail(d) for d in details], ensure_ascii=False, indent=2))
+        print(json.dumps(details, ensure_ascii=False, indent=2))
     elif args.cmd == "url":
-        print(json.dumps(normalize_detail(client.get_detail(url=args.url)), ensure_ascii=False, indent=2))
+        print(json.dumps(client.get_detail(url=args.url), ensure_ascii=False, indent=2))
     return 0
 
 
