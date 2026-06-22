@@ -31,9 +31,11 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 import time
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -115,6 +117,7 @@ PX_COOKIES = ("_px3", "_pxvid", "pxcts", "_pxde")
 
 # `_px3` dura ~10 min; tratamos como velho antes disso pra re-mintar com folga.
 SESSION_TTL_SECONDS = int(os.getenv("WEBMOTORS_SESSION_TTL", "480"))
+MINT_ATTEMPTS = int(os.getenv("WEBMOTORS_MINT_ATTEMPTS", "3"))
 
 # Script de stealth injetado antes de qualquer JS da página (patch dos tells
 # clássicos de automação que o PerimeterX procura).
@@ -226,6 +229,26 @@ def _solve_press_and_hold(page: Page, *, attempts: int = 3) -> bool:
 # ==========================================
 
 def mint_session(*, headless: bool = False, verbose: bool = True) -> WebmotorsSession:
+    last_error: WebmotorsBlocked | None = None
+    attempts = max(1, MINT_ATTEMPTS)
+    for attempt in range(1, attempts + 1):
+        try:
+            return _mint_session_once(headless=headless, verbose=verbose)
+        except WebmotorsBlocked as exc:
+            last_error = exc
+            if attempt >= attempts:
+                break
+            if verbose:
+                print(
+                    f"[mint] tentativa {attempt} falhou ({exc}); limpando rastros e tentando novamente...",
+                    file=sys.stderr,
+                )
+            clear_session_artifacts(clear_profile=True)
+            time.sleep(2 + attempt)
+    raise last_error or WebmotorsBlocked("falha ao obter sessão da Webmotors")
+
+
+def _mint_session_once(*, headless: bool = False, verbose: bool = True) -> WebmotorsSession:
     """Abre o Chrome real, passa pelo PerimeterX e devolve uma sessão válida.
 
     Bypass: se WEBMOTORS_COOKIE estiver no ambiente, usa direto (sem browser).
@@ -297,6 +320,27 @@ def close_browser() -> None:
     return None
 
 
+def clear_session_artifacts(*, clear_profile: bool = True) -> None:
+    """Remove cache/cookies locais usados no mint da Webmotors."""
+    try:
+        CACHE_PATH.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+    if not clear_profile:
+        return
+
+    profile_path = Path(PROFILE_DIR).resolve()
+    temp_path = Path(tempfile.gettempdir()).resolve()
+    unsafe_targets = {Path(profile_path.anchor).resolve(), Path.home().resolve(), temp_path}
+    if profile_path in unsafe_targets:
+        return
+    try:
+        shutil.rmtree(profile_path, ignore_errors=True)
+    except OSError:
+        pass
+
+
 # ==========================================
 # Cache de sessão em disco
 # ==========================================
@@ -324,7 +368,8 @@ def save_cached_session(session: WebmotorsSession) -> None:
 
 def slugify(value: str) -> str:
     """'1.5 i-VTEC FLEX HATCH EXL CVT' -> '15-i-vtec-flex-hatch-exl-cvt'."""
-    value = value.lower().replace(".", "")
+    value = unicodedata.normalize("NFKD", value.lower().replace(".", ""))
+    value = "".join(ch for ch in value if not unicodedata.combining(ch))
     value = re.sub(r"[^a-z0-9]+", "-", value)
     return re.sub(r"-+", "-", value).strip("-")
 
@@ -363,8 +408,10 @@ class WebmotorsClient:
 
     # -- sessão ----------------------------------------------------------
 
-    def ensure_session(self, *, force: bool = False) -> WebmotorsSession:
+    def ensure_session(self, *, force: bool = False, clear_profile: bool = False) -> WebmotorsSession:
         if force or self._session is None or not self._session.is_fresh():
+            if force:
+                clear_session_artifacts(clear_profile=clear_profile)
             self._session = mint_session(headless=self._headless)
             save_cached_session(self._session)
         return self._session
@@ -383,7 +430,7 @@ class WebmotorsClient:
         resp = requests.get(url, headers=self._headers(), timeout=30)
         if resp.status_code in (401, 403) and not _retried:
             # token velho/queimado -> re-minta uma vez e tenta de novo.
-            self.ensure_session(force=True)
+            self.ensure_session(force=True, clear_profile=True)
             return self._get(url, _retried=True)
         return resp
 
@@ -480,6 +527,7 @@ def _main(argv: list[str]) -> int:
 
     p_mint = sub.add_parser("mint", help="abre o browser, resolve o PX e salva a sessão")
     p_mint.add_argument("--headless", action="store_true")
+    p_mint.add_argument("--clear-profile", action="store_true")
 
     p_search = sub.add_parser("search", help="lista anúncios")
     p_search.add_argument("--marca", required=True)
@@ -508,7 +556,7 @@ def _main(argv: list[str]) -> int:
     client = WebmotorsClient(headless=getattr(args, "headless", False))
 
     if args.cmd == "mint":
-        sess = client.ensure_session(force=True)
+        sess = client.ensure_session(force=True, clear_profile=args.clear_profile)
         print(json.dumps({"cookies": list(sess.cookies), "user_agent": sess.user_agent}, indent=2))
     elif args.cmd == "search":
         extra = _build_search_extra(

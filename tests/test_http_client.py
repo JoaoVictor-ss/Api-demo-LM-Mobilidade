@@ -85,10 +85,12 @@ def test_get_retries_on_403_and_returns_200(
     remint_calls: list[dict[str, Any]] = []
     original_ensure = WebmotorsClient.ensure_session
 
-    def spy_ensure(self: WebmotorsClient, *, force: bool = False) -> WebmotorsSession:
+    def spy_ensure(
+        self: WebmotorsClient, *, force: bool = False, clear_profile: bool = False
+    ) -> WebmotorsSession:
         if force:
-            remint_calls.append({"force": force})
-        return original_ensure(self, force=force)
+            remint_calls.append({"force": force, "clear_profile": clear_profile})
+        return original_ensure(self, force=force, clear_profile=clear_profile)
 
     monkeypatch.setattr(WebmotorsClient, "ensure_session", spy_ensure)
 
