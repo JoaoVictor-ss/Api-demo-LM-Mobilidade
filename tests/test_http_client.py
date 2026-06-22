@@ -85,10 +85,12 @@ def test_get_retries_on_403_and_returns_200(
     remint_calls: list[dict[str, Any]] = []
     original_ensure = WebmotorsClient.ensure_session
 
-    def spy_ensure(self: WebmotorsClient, *, force: bool = False) -> WebmotorsSession:
+    def spy_ensure(
+        self: WebmotorsClient, *, force: bool = False, clear_profile: bool = False
+    ) -> WebmotorsSession:
         if force:
-            remint_calls.append({"force": force})
-        return original_ensure(self, force=force)
+            remint_calls.append({"force": force, "clear_profile": clear_profile})
+        return original_ensure(self, force=force, clear_profile=clear_profile)
 
     monkeypatch.setattr(WebmotorsClient, "ensure_session", spy_ensure)
 
@@ -178,6 +180,34 @@ def test_search_returns_payload_and_url_shape(
     assert qs.get("displayPerPage") == ["24"]
     assert qs.get("actualPage") == ["1"]
     assert qs.get("order") == ["1"]
+
+
+def test_search_forwards_extra_filters_and_encodes_values(
+    requests_mock: Any,
+    search_payload: dict[str, Any],
+) -> None:
+    """search() forwards filters used by FastAPI: localidade, cor, ano_de, ano_ate."""
+    search_endpoint = re.compile(r".*/api/search/car.*")
+    requests_mock.get(search_endpoint, json=search_payload, status_code=200)
+
+    client = _client_with_fresh_session()
+    extra = wm._build_search_extra(
+        localidade="São Paulo",
+        cor="Branco",
+        ano_de=2019,
+        ano_ate=2022,
+    )
+    result = client.search(make="honda", model="city", extra=extra)
+
+    assert result == search_payload
+
+    parsed = urlparse(requests_mock.last_request.url)
+    qs = parse_qs(parsed.query, keep_blank_values=True)
+    decoded_inner = unquote(qs["url"][0])
+    assert "localizacao=São+Paulo" in decoded_inner
+    assert "cor1=Branco" in decoded_inner
+    assert "anode=2019" in decoded_inner
+    assert "anoate=2022" in decoded_inner
 
 
 # ---------------------------------------------------------------------------

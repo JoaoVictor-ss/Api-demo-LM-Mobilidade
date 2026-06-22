@@ -31,12 +31,15 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 import time
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 import requests
 from playwright.sync_api import Error as PlaywrightError
@@ -114,6 +117,7 @@ PX_COOKIES = ("_px3", "_pxvid", "pxcts", "_pxde")
 
 # `_px3` dura ~10 min; tratamos como velho antes disso pra re-mintar com folga.
 SESSION_TTL_SECONDS = int(os.getenv("WEBMOTORS_SESSION_TTL", "480"))
+MINT_ATTEMPTS = int(os.getenv("WEBMOTORS_MINT_ATTEMPTS", "3"))
 
 # Script de stealth injetado antes de qualquer JS da página (patch dos tells
 # clássicos de automação que o PerimeterX procura).
@@ -134,6 +138,26 @@ _STEALTH_JS = """
 
 class WebmotorsBlocked(RuntimeError):
     """Falha em obter uma sessão válida (PerimeterX bloqueou de novo)."""
+
+
+def _build_search_extra(
+    *,
+    localidade: str = "",
+    cor: str = "",
+    ano_de: int | None = None,
+    ano_ate: int | None = None,
+) -> dict[str, str]:
+    """Monta filtros adicionais para a URL interna de estoque da Webmotors."""
+    extra: dict[str, str] = {}
+    if localidade:
+        extra["localizacao"] = localidade.strip()
+    if cor:
+        extra["cor1"] = cor.strip()
+    if ano_de is not None:
+        extra["anode"] = str(ano_de)
+    if ano_ate is not None:
+        extra["anoate"] = str(ano_ate)
+    return {k: v for k, v in extra.items() if v}
 
 
 @dataclass
@@ -205,6 +229,26 @@ def _solve_press_and_hold(page: Page, *, attempts: int = 3) -> bool:
 # ==========================================
 
 def mint_session(*, headless: bool = False, verbose: bool = True) -> WebmotorsSession:
+    last_error: WebmotorsBlocked | None = None
+    attempts = max(1, MINT_ATTEMPTS)
+    for attempt in range(1, attempts + 1):
+        try:
+            return _mint_session_once(headless=headless, verbose=verbose)
+        except WebmotorsBlocked as exc:
+            last_error = exc
+            if attempt >= attempts:
+                break
+            if verbose:
+                print(
+                    f"[mint] tentativa {attempt} falhou ({exc}); limpando rastros e tentando novamente...",
+                    file=sys.stderr,
+                )
+            clear_session_artifacts(clear_profile=True)
+            time.sleep(2 + attempt)
+    raise last_error or WebmotorsBlocked("falha ao obter sessão da Webmotors")
+
+
+def _mint_session_once(*, headless: bool = False, verbose: bool = True) -> WebmotorsSession:
     """Abre o Chrome real, passa pelo PerimeterX e devolve uma sessão válida.
 
     Bypass: se WEBMOTORS_COOKIE estiver no ambiente, usa direto (sem browser).
@@ -276,6 +320,27 @@ def close_browser() -> None:
     return None
 
 
+def clear_session_artifacts(*, clear_profile: bool = True) -> None:
+    """Remove cache/cookies locais usados no mint da Webmotors."""
+    try:
+        CACHE_PATH.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+    if not clear_profile:
+        return
+
+    profile_path = Path(PROFILE_DIR).resolve()
+    temp_path = Path(tempfile.gettempdir()).resolve()
+    unsafe_targets = {Path(profile_path.anchor).resolve(), Path.home().resolve(), temp_path}
+    if profile_path in unsafe_targets:
+        return
+    try:
+        shutil.rmtree(profile_path, ignore_errors=True)
+    except OSError:
+        pass
+
+
 # ==========================================
 # Cache de sessão em disco
 # ==========================================
@@ -303,7 +368,8 @@ def save_cached_session(session: WebmotorsSession) -> None:
 
 def slugify(value: str) -> str:
     """'1.5 i-VTEC FLEX HATCH EXL CVT' -> '15-i-vtec-flex-hatch-exl-cvt'."""
-    value = value.lower().replace(".", "")
+    value = unicodedata.normalize("NFKD", value.lower().replace(".", ""))
+    value = "".join(ch for ch in value if not unicodedata.combining(ch))
     value = re.sub(r"[^a-z0-9]+", "-", value)
     return re.sub(r"-+", "-", value).strip("-")
 
@@ -342,8 +408,10 @@ class WebmotorsClient:
 
     # -- sessão ----------------------------------------------------------
 
-    def ensure_session(self, *, force: bool = False) -> WebmotorsSession:
+    def ensure_session(self, *, force: bool = False, clear_profile: bool = False) -> WebmotorsSession:
         if force or self._session is None or not self._session.is_fresh():
+            if force:
+                clear_session_artifacts(clear_profile=clear_profile)
             self._session = mint_session(headless=self._headless)
             save_cached_session(self._session)
         return self._session
@@ -362,7 +430,7 @@ class WebmotorsClient:
         resp = requests.get(url, headers=self._headers(), timeout=30)
         if resp.status_code in (401, 403) and not _retried:
             # token velho/queimado -> re-minta uma vez e tenta de novo.
-            self.ensure_session(force=True)
+            self.ensure_session(force=True, clear_profile=True)
             return self._get(url, _retried=True)
         return resp
 
@@ -384,7 +452,7 @@ class WebmotorsClient:
             inner["modelo1"] = model.lower()
         if extra:
             inner.update(extra)
-        inner_qs = "&".join(f"{k}={v}" for k, v in inner.items())
+        inner_qs = urlencode(inner)
         inner_url = requests.utils.quote(f"{BASE_URL}/carros/estoque?{inner_qs}", safe="")
         url = (
             f"{BASE_URL}/api/search/car?url={inner_url}"
@@ -407,12 +475,18 @@ class WebmotorsClient:
         return resp.json()
 
     def iter_details(
-        self, *, make: str, model: str = "", pages: int = 1, per_page: int = 24
+        self,
+        *,
+        make: str,
+        model: str = "",
+        pages: int = 1,
+        per_page: int = 24,
+        extra: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
         """Busca + detalha todos os usados (UniqueId > 0) das páginas pedidas."""
         out: list[dict[str, Any]] = []
         for p in range(1, pages + 1):
-            results = self.search(make=make, model=model, page=p, per_page=per_page)
+            results = self.search(make=make, model=model, page=p, per_page=per_page, extra=extra)
             for item in results.get("SearchResults", []):
                 if item.get("UniqueId", 0) > 0:
                     out.append(self.get_detail(listing=item))
@@ -453,16 +527,25 @@ def _main(argv: list[str]) -> int:
 
     p_mint = sub.add_parser("mint", help="abre o browser, resolve o PX e salva a sessão")
     p_mint.add_argument("--headless", action="store_true")
+    p_mint.add_argument("--clear-profile", action="store_true")
 
     p_search = sub.add_parser("search", help="lista anúncios")
     p_search.add_argument("--marca", required=True)
     p_search.add_argument("--modelo", default="")
+    p_search.add_argument("--localidade", default="")
+    p_search.add_argument("--cor", default="")
+    p_search.add_argument("--ano-de", type=int)
+    p_search.add_argument("--ano-ate", type=int)
     p_search.add_argument("--page", type=int, default=1)
     p_search.add_argument("--per-page", type=int, default=24)
 
     p_detail = sub.add_parser("detail", help="detalha N usados de uma busca")
     p_detail.add_argument("--marca", required=True)
     p_detail.add_argument("--modelo", default="")
+    p_detail.add_argument("--localidade", default="")
+    p_detail.add_argument("--cor", default="")
+    p_detail.add_argument("--ano-de", type=int)
+    p_detail.add_argument("--ano-ate", type=int)
     p_detail.add_argument("--pages", type=int, default=1)
     p_detail.add_argument("--per-page", type=int, default=12)
 
@@ -473,13 +556,37 @@ def _main(argv: list[str]) -> int:
     client = WebmotorsClient(headless=getattr(args, "headless", False))
 
     if args.cmd == "mint":
-        sess = client.ensure_session(force=True)
+        sess = client.ensure_session(force=True, clear_profile=args.clear_profile)
         print(json.dumps({"cookies": list(sess.cookies), "user_agent": sess.user_agent}, indent=2))
     elif args.cmd == "search":
-        data = client.search(make=args.marca, model=args.modelo, page=args.page, per_page=args.per_page)
+        extra = _build_search_extra(
+            localidade=args.localidade,
+            cor=args.cor,
+            ano_de=args.ano_de,
+            ano_ate=args.ano_ate,
+        )
+        data = client.search(
+            make=args.marca,
+            model=args.modelo,
+            page=args.page,
+            per_page=args.per_page,
+            extra=extra,
+        )
         print(json.dumps(data, ensure_ascii=False, indent=2))
     elif args.cmd == "detail":
-        details = client.iter_details(make=args.marca, model=args.modelo, pages=args.pages, per_page=args.per_page)
+        extra = _build_search_extra(
+            localidade=args.localidade,
+            cor=args.cor,
+            ano_de=args.ano_de,
+            ano_ate=args.ano_ate,
+        )
+        details = client.iter_details(
+            make=args.marca,
+            model=args.modelo,
+            pages=args.pages,
+            per_page=args.per_page,
+            extra=extra,
+        )
         print(json.dumps(details, ensure_ascii=False, indent=2))
     elif args.cmd == "url":
         print(json.dumps(client.get_detail(url=args.url), ensure_ascii=False, indent=2))

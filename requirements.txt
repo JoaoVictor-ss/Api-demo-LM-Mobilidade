@@ -4,3 +4,6 @@ tavily-python
 python-dotenv
 requests
 playwright
+boto3
+openpyxl
+python-multipart

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LM Mobilidade | Recomendador</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="search-panel" aria-labelledby="page-title">
+        <div class="title-row">
+          <div>
+            <p class="eyebrow">LM Mobilidade</p>
+            <h1 id="page-title">Recomendador de compra</h1>
+          </div>
+          <a class="docs-link" href="/docs">Swagger</a>
+        </div>
+
+        <div class="mode-toggle" role="radiogroup" aria-label="Tipo de análise">
+          <label>
+            <input type="radio" name="analysis_mode" value="single" checked />
+            Item único
+          </label>
+          <label>
+            <input type="radio" name="analysis_mode" value="batch" />
+            Vários por Excel
+          </label>
+        </div>
+
+        <form id="vehicle-form" class="vehicle-form">
+          <label>
+            Marca
+            <input name="marca" autocomplete="off" required placeholder="Honda" />
+          </label>
+
+          <label>
+            Modelo
+            <input name="modelo" autocomplete="off" placeholder="City" />
+          </label>
+
+          <label>
+            Localidade
+            <input name="localidade" autocomplete="off" placeholder="São Paulo" />
+          </label>
+
+          <label>
+            Cor
+            <input name="cor" autocomplete="off" placeholder="Branco" />
+          </label>
+
+          <div class="range-row">
+            <label>
+              Ano de
+              <input name="ano_de" type="number" min="1900" max="2100" placeholder="2019" />
+            </label>
+
+            <label>
+              Ano até
+              <input name="ano_ate" type="number" min="1900" max="2100" placeholder="2022" />
+            </label>
+          </div>
+
+          <div class="range-row">
+            <label>
+              Páginas
+              <input name="pages" type="number" min="1" max="3" value="1" />
+            </label>
+
+            <label>
+              Itens por página
+              <input name="per_page" type="number" min="1" max="24" value="24" />
+            </label>
+          </div>
+
+          <button id="submit-button" type="submit">Analisar compra</button>
+        </form>
+
+        <form id="batch-form" class="vehicle-form hidden">
+          <label>
+            Planilha Excel
+            <input name="file" type="file" accept=".xlsx" required />
+          </label>
+
+          <a class="template-link" href="/recommendation/batch/template">Baixar modelo</a>
+
+          <button id="batch-button" type="submit">Analisar planilha</button>
+        </form>
+      </section>
+
+      <section class="result-panel" aria-live="polite">
+        <div id="empty-state" class="empty-state">
+          <h2>Resultado</h2>
+          <p>A recomendação do Bedrock Agent aparece aqui depois da busca.</p>
+        </div>
+
+        <div id="loading-state" class="loading-state hidden">
+          <div class="bar"></div>
+          <p>Consultando Webmotors e Bedrock Agent...</p>
+        </div>
+
+        <div id="error-state" class="error-state hidden"></div>
+
+        <div id="result-state" class="result-state hidden">
+          <div class="metrics" id="metrics"></div>
+          <article class="recommendation">
+            <h2>Recomendação</h2>
+            <p id="recommendation-text"></p>
+          </article>
+          <div>
+            <h2>Anúncios analisados</h2>
+            <div class="vehicle-list" id="vehicle-list"></div>
+          </div>
+        </div>
+
+        <div id="batch-result-state" class="batch-result-state hidden">
+          <div class="metrics" id="batch-metrics"></div>
+          <article class="recommendation">
+            <h2>Planilha pronta</h2>
+            <p id="batch-result-text"></p>
+          </article>
+          <a id="batch-download" class="download-button" href="#" download="resultado_recomendacoes.xlsx">
+            Baixar resultado
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
